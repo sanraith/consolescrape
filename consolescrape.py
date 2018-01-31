@@ -1,25 +1,33 @@
 import logging
 import requests
+import datetime
 from collections import namedtuple
 from lxml import html
 
-GameItem = namedtuple("GameItem", ["title", "price", "in_stock"])
+
+class Game:
+    def __init__(self, title):
+        self.title = title
+        self.states = []
+
+    @property
+    def state(self):
+        return self.states[-1]
+
+    @property
+    def creation_date(self):
+        return self.states[0].timestamp
+
+
+GameState = namedtuple("GameState", ["timestamp", "price", "in_stock"])
 
 
 def load_url(url, iscached):
-    cache_file_name = "cached.html"
-    try:
-        if not iscached:
-            raise ValueError("no cache")
-        with open(cache_file_name, "rt", encoding="utf-8") as file:
-            content = file.read()
-            logging.info("Loded page from cache.")
-    except ValueError:
-        page = requests.get(url)
-        content = page.content
-        logging.info("Loded page from the internet.")
-        with open(cache_file_name, "wt", encoding="utf-8") as file:
-            file.write(str(content))
+    if iscached == True:
+        raise NotImplementedError("Caching is not implemented.")
+    page = requests.get(url)
+    content = page.content
+    logging.info("Loded page from the internet.")
     return content
 
 
@@ -28,7 +36,8 @@ def trim_elem(elements):
 
 
 def scrape_page(content):
-    games = []
+    games_dict = {}
+    time_now = datetime.datetime.now()
     tree = html.fromstring(content)
     cards = tree.xpath("//div[contains(@class, 'content')]//article[contains(@class, 'card')]")
     for card in cards:
@@ -39,12 +48,11 @@ def scrape_page(content):
             price = int(price.replace(" ", ""))
         except ValueError:
             price = None
-        games.append(GameItem(title, price, in_stock))
-    return games
+        games_dict[title] = GameState(time_now, price, in_stock)
+    return games_dict
 
 
-def get_games():
-    games = []
+def get_games(games_dict):
     page_index = 0
     while True:
         page_index += 1
@@ -58,24 +66,29 @@ def get_games():
         if not games_page:
             print("Done.\n")
             break
-        games.extend(games_page)
-    return games
+
+        for title, game_state in games_page.items():
+            if title not in games_dict:
+                games_dict[title] = Game(title)
+            games_dict[title].states.append(game_state)
+    return games_dict
 
 
 def print_available_games(games):
-    available_games = list(filter(lambda x: x.price and x.in_stock, games))
+    available_games = list(filter(lambda x: x.state.price and x.state.in_stock, games))
     max_title_length = max([len(x.title) for x in available_games])
-    max_price_length = max([len(str(x.price)) for x in available_games])
+    max_price_length = max([len(str(x.state.price)) for x in available_games])
     for game in sorted(available_games, key=lambda x: x.title):
         padded_title = game.title.ljust(max_title_length)
-        padded_price = str(game.price).rjust(max_price_length)
+        padded_price = str(game.state.price).rjust(max_price_length)
         print("{t} {p} Ft".format(t=padded_title, p=padded_price))
     print("\nGames: {}, available: {}.".format(len(games), len(available_games)))
 
 
 def main():
-    games = get_games()
-    print_available_games(games)
+    games_dict = {}  # todo persist
+    get_games(games_dict)
+    print_available_games(games_dict.values())
 
 
 if __name__ == "__main__":
