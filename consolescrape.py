@@ -1,6 +1,7 @@
 import logging
 import requests
 import datetime
+import pickle
 from collections import namedtuple
 from lxml import html
 
@@ -8,15 +9,25 @@ from lxml import html
 class Game:
     def __init__(self, title):
         self.title = title
-        self.states = []
+        self._states = []
 
     @property
     def state(self):
-        return self.states[-1]
+        return self._states[-1]
+
+    @property
+    def states(self):
+        return list(self._states)
 
     @property
     def creation_date(self):
-        return self.states[0].timestamp
+        return self._states[0].timestamp
+
+    def add_state(self, new_state):
+        if len(self._states) > 0:
+            if all([self.state[x] == new_state[x] for x in range(1, len(GameState._fields))]):
+                return  # new state is the same as the last excluding timestamp
+        self._states.append(new_state)
 
 
 GameState = namedtuple("GameState", ["timestamp", "price", "in_stock"])
@@ -36,7 +47,7 @@ def trim_elem(elements):
 
 
 def scrape_page(content):
-    games_dict = {}
+    states = {}
     time_now = datetime.datetime.now()
     tree = html.fromstring(content)
     cards = tree.xpath("//div[contains(@class, 'content')]//article[contains(@class, 'card')]")
@@ -48,11 +59,11 @@ def scrape_page(content):
             price = int(price.replace(" ", ""))
         except ValueError:
             price = None
-        games_dict[title] = GameState(time_now, price, in_stock)
-    return games_dict
+        states[title] = GameState(time_now, price, in_stock)
+    return states
 
 
-def get_games(games_dict):
+def fetch_game_states(games_dict):
     page_index = 0
     while True:
         page_index += 1
@@ -60,17 +71,17 @@ def get_games(games_dict):
         print("Loading page: {}".format(url))
         try:
             content = load_url(url, iscached=False)
-            games_page = scrape_page(content)
+            game_states = scrape_page(content)
         except ValueError:
             break
-        if not games_page:
+        if not game_states:
             print("Done.\n")
             break
 
-        for title, game_state in games_page.items():
+        for title, game_state in game_states.items():
             if title not in games_dict:
                 games_dict[title] = Game(title)
-            games_dict[title].states.append(game_state)
+            games_dict[title].add_state(game_state)
     return games_dict
 
 
@@ -78,17 +89,34 @@ def print_available_games(games):
     available_games = list(filter(lambda x: x.state.price and x.state.in_stock, games))
     max_title_length = max([len(x.title) for x in available_games])
     max_price_length = max([len(str(x.state.price)) for x in available_games])
+    last_change = max([x.state.timestamp for x in available_games])
     for game in sorted(available_games, key=lambda x: x.title):
         padded_title = game.title.ljust(max_title_length)
         padded_price = str(game.state.price).rjust(max_price_length)
-        print("{t} {p} Ft".format(t=padded_title, p=padded_price))
-    print("\nGames: {}, available: {}.".format(len(games), len(available_games)))
+        print("{title} {price} Ft [{timestamp}]".format(
+            title=padded_title, price=padded_price, timestamp=game.state.timestamp))
+    print("\nGames: {}, available: {}, last change: {}".format(len(games), len(available_games), last_change))
+
+
+def load_db():
+    try:
+        with open("games.db", "rb") as fb:
+            games_dict = pickle.load(fb)
+    except FileNotFoundError:
+        games_dict = {}
+    return games_dict
+
+
+def save_db(games_dict):
+    with open("games.db", "wb") as fb:
+        pickle.dump(games_dict, fb)
 
 
 def main():
-    games_dict = {}  # todo persist
-    get_games(games_dict)
+    games_dict = load_db()
+    fetch_game_states(games_dict)
     print_available_games(games_dict.values())
+    save_db(games_dict)
 
 
 if __name__ == "__main__":

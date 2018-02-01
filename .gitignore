@@ -101,6 +101,4 @@ ENV/
 .mypy_cache/
 
 # custom settings
-exercisefiles/
-fundamentals/10files/*.txt
-fundamentals/10files/*.bmp
+games.db
