@@ -70,10 +70,11 @@ class Scraper:
         while True:
             page_index += 1
             url = "https://www.konzolvilag.hu/switch/jatekok/oldal-{}".format(page_index)
-            print("Loading page: {}".format(url))
+            print("Loading page: {} ".format(url), end="")
             try:
                 content = self.load_url(url, iscached=False)
                 game_states = self.scrape_page(content)
+                print("Found {} games.".format(len(game_states)))
             except ValueError:
                 break
             if not game_states:
