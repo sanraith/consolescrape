@@ -95,8 +95,14 @@ class Scraper:
         for game in sorted(available_games, key=lambda x: x.title):
             padded_title = game.title.ljust(max_title_length)
             padded_price = str(game.state.price).rjust(max_price_length)
-            print("{title} - {price} Ft [{timestamp}]".format(
-                title=padded_title, price=padded_price, timestamp=game.state.timestamp.strftime("%y.%m.%d. %H:%M")))
+
+            prev_price = next((x.price for x in reversed(game.states) if x.price != game.state.price), "")
+            if prev_price:
+                change_chars = "↑↑" if game.state.price > prev_price else "↓↓"
+                prev_price = " {} from {} Ft".format(change_chars, prev_price) if prev_price else ""
+
+            print("{title} - {price} Ft [{timestamp}]{change}".format(
+                title=padded_title, price=padded_price, timestamp=game.state.timestamp.strftime("%y.%m.%d. %H:%M"), change=prev_price))
 
     def print_last_changes(self, games):
         last_date = max([x.state.timestamp for x in games])
