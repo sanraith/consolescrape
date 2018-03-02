@@ -96,10 +96,12 @@ class Scraper:
             padded_title = game.title.ljust(max_title_length)
             padded_price = str(game.state.price).rjust(max_price_length)
 
-            prev_price = next((x.price for x in reversed(game.states) if x.price != game.state.price), "")
+            prev_price = next((x.price for x in reversed(game.states) if x.price != game.state.price), None)
             if prev_price:
                 change_chars = "↑↑" if game.state.price > prev_price else "↓↓"
                 prev_price = " {} from {} Ft".format(change_chars, prev_price) if prev_price else ""
+            else:
+                prev_price = ""
 
             print("{title} - {price} Ft [{timestamp}]{change}".format(
                 title=padded_title, price=padded_price, timestamp=game.state.timestamp.strftime("%y.%m.%d. %H:%M"), change=prev_price))
