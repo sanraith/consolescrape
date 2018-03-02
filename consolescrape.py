@@ -107,19 +107,26 @@ class Scraper:
                 title=padded_title, price=padded_price, timestamp=game.state.timestamp.strftime("%y.%m.%d. %H:%M"), change=prev_price))
 
     def print_last_changes(self, games):
+        timestamps = {state.timestamp for game in games for state in game.states}
+        if len(timestamps) <= 1:
+            return
+
         last_date = max([x.state.timestamp for x in games])
         print("\nLast changes [{}]:".format(last_date.strftime("%y.%m.%d. %H:%M")))
         changed_games = sorted(filter(lambda x: x.state.timestamp == last_date, games), key=lambda x: x.title)
         max_title_length = max([len(x.title) for x in changed_games])
         for game in changed_games:
-            s1 = game.states[-2] if len(game.states) > 1 else game.state
-            s2 = game.state
             stock_change = ""
             price_change = ""
-            if s1.in_stock != s2.in_stock:
-                stock_change = "Now {}. ".format("available" if s2.in_stock else "unavailable")
-            if s1.price != s2.price:
-                price_change = "{} => {} Ft ".format(s1.price, s2.price)
+            if len(game.states) == 1:
+                stock_change = "Added."
+            else:
+                s1 = game.states[-2]
+                s2 = game.state
+                if s1.price != s2.price:
+                    price_change = "{} => {} Ft ".format(s1.price, s2.price)
+                if s1.in_stock != s2.in_stock:
+                    stock_change = "Now {}. ".format("available" if s2.in_stock else "unavailable")
 
             state_str = "{n} - {a}{p}".format(n=game.title.ljust(max_title_length), p=price_change, a=stock_change)
             print(state_str)
