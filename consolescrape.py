@@ -43,7 +43,7 @@ class Scraper:
             raise NotImplementedError("Caching is not implemented.")
         page = requests.get(url)
         content = page.content
-        logging.info("Loded page from the internet.")
+        logging.info("Loaded page from the internet.")
         return content
 
     @staticmethod
