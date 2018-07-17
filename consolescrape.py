@@ -4,6 +4,7 @@ import pickle
 import requests
 from collections import namedtuple
 from lxml import html
+from requests import RequestException
 
 
 class Game:
@@ -67,6 +68,7 @@ class Scraper:
 
     def fetch_game_states(self, games_dict):
         page_index = 0
+        error_count = 0
         while True:
             page_index += 1
             url = "https://www.konzolvilag.hu/switch/jatekok/oldal-{}".format(page_index)
@@ -77,6 +79,13 @@ class Scraper:
                 print("Found {} games.".format(len(game_states)))
             except ValueError:
                 break
+            except RequestException:
+                error_count += 1
+                if error_count > 10:
+                    break
+                print("Error #{}. Retrying....".format(error_count))
+                page_index -= 1
+                continue
             if not game_states:
                 print("Done.")
                 break
