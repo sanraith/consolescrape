@@ -5,7 +5,7 @@ setup(
     version='1.0',
     py_modules=['consolescrape'],
     install_requires=[
-        'lxml>=4.1.1',
+        'lxml>=4.4.2',
         'requests>=2.18.4'
     ],
 
