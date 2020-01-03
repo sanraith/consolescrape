@@ -12,7 +12,7 @@ setup(
     # metadata
     author='Soma Zsják',
     author_email='zsjaks@gmail.com',
-    description='A module for scraping console selling sites for games.',
-    license='Public domain',
+    description='Scrape a console webshop for Nintendo Switch game price changes.',
+    license='MIT',
     keywords='none',
 )

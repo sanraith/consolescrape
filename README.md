@@ -1,10 +1,13 @@
 # consolescrape
 
-Python app which scrapes a webshop for Nintendo Switch games, and saves the historical price and availability data into a database. Python version: 3.8+
+Python app to scrape a webshop for Nintendo Switch games,
+and save the historical price and availability data into a database.
+
+Python version: 3.8+
 
 ## Setup
 
-    git clone <https://github.com/sanraith/consolescrape>
+    git clone https://github.com/sanraith/consolescrape
     cd consolescrape
     python -m venv venv
     .\venv\Scripts\activate
