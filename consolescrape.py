@@ -126,9 +126,9 @@ class Scraper:
         max_title_length = max([len(x.title) for x in changed_games])
         for game in changed_games:
             stock_change = ""
-            price_change = ""
+            price_change = "{} Ft ".format(game.state.price)
             if len(game.states) == 1:
-                stock_change = "Added."
+                stock_change = "Added. "
             else:
                 s1 = game.states[-2]
                 s2 = game.state
