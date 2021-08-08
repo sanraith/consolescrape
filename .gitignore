@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # custom settings
-games.db
+**/games.db

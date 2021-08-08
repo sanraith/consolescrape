@@ -49,7 +49,7 @@ class Scraper:
 
     @staticmethod
     def trim_elem(elements):
-        return str(elements[0]).strip()
+        return str(elements[0]).strip() if elements else ""
 
     def scrape_page(self, content):
         states = {}
